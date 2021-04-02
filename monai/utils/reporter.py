@@ -1,15 +1,13 @@
-
 from humbug.consent import HumbugConsent
-from humbug.report import Reporter, Modes, Report
+from humbug.report import Reporter, Modes
 
 from .module import get_torch_version_tuple
 
 import uuid
-from pprint import pprint
 from .._version import get_versions
 
-HUMBUG_TOKEN = "e10fbd54-71b0-4e68-80b0-d59ec3d99a81"
-HUMBUG_KB_ID = "2e995d6c-95a9-4a35-8ee6-49846ac7fc63"
+HUMBUG_TOKEN = "48dff1a9-0f64-4f14-848a-0dfde7568e5b"
+HUMBUG_KB_ID = "5b637900-c32f-4b41-b949-5ac6e28bde52"
 version_dict = get_versions()
 
 session_id = str(uuid.uuid4())
@@ -17,7 +15,6 @@ session_id_tag = "session_id:{}".format(session_id)
 
 version_tag = f"{version_dict.get('version', '0+unknown')}-dev-reporting"
 revision_tag = version_dict.get("full-revisionid", None)
-
 
 torch_version = ".".join([str(i) for i in get_torch_version_tuple()])
 if not torch_version:
@@ -27,13 +24,18 @@ monai_version_tag = "version:{}".format(version_tag)
 monai_revision_tag = "revision:{}".format(revision_tag)
 tourch_version_tag = "pytorch:{}".format(torch_version)
 
-
-
 monai_tags = [monai_version_tag, monai_revision_tag, tourch_version_tag]
 
+class ConsentState:
+    def __init__(self, consent: bool = False) -> None:
+        self.consent: bool = consent
 
+    def check(self) -> bool:
+        return self.consent
 
-monai_consent = HumbugConsent(True)
+monai_consent_state = ConsentState(False)
+
+monai_consent = HumbugConsent(monai_consent_state.check)
 monai_reporter = Reporter(
     name="MONAI",
     consent=monai_consent,
