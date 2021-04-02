@@ -1,3 +1,5 @@
+import sys
+
 from humbug.consent import HumbugConsent
 from humbug.report import Reporter, Modes
 
@@ -48,4 +50,14 @@ monai_reporter = Reporter(
 
 def setup_excepthook():
     monai_reporter.system_report(publish=True, tags=monai_tags)
-    monai_reporter.setup_excepthook(publish=True, tags=monai_tags)
+    try:
+        ipython_shell = get_ipython()
+        old_showtraceback = ipython_shell.showtraceback
+        def showtraceback(*args, **kwargs):
+            _, exc_instance, _ = sys.exc_info()
+            monai_reporter.error_report(exc_instance, tags=monai_tags, publish=True)
+            old_showtraceback(*args, **kwargs)
+
+        ipython_shell.showtraceback = showtraceback
+    except NameError:
+        monai_reporter.setup_excepthook(publish=True, tags=monai_tags)
